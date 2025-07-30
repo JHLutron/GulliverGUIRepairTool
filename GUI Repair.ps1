@@ -25,7 +25,8 @@ Start-Sleep -Seconds 5
 function Get-YNResponse([string]$Prompt) {
     $validInput = $false
     while (-not $validInput) {
-       $response = Read-Host $Prompt
+        Write-Host $Prompt -ForegroundColor Green
+       $response = $Host.UI.RawUI.ReadKey().toString()[3]
        if ($response -eq "y" -or $response -eq "n") {
            $validInput = $true
            return $response
