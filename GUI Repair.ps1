@@ -1,4 +1,6 @@
+#Commenting out the elevation process for the exe version since this is not neeeded if ran as admin on the exe
 #Verifying administrator permissions are granted, if not, opens in elevated window
+<#
 try{
     if(!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
     Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($MyInvocation.MyCommand.Path)`"  `"$($MyInvocation.MyCommand.UnboundArguments)`""
@@ -14,9 +16,12 @@ $currentProcessId = $PID
 $powershellProcesses = Get-Process -Name powershell
 $powershellProcesses | Where-Object {$_.Id -ne $currentProcessId} | Stop-Process -Force
 
-Start-Transcript -Path "C:\temp\LutronGUIRepair.log"
+#>
+$dateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+Start-Transcript -Path "C:\temp\LutronGUIRepair" + $dateTime + ".log"
+Write-Host "Log file saved at: " + "C:\temp\LutronGUIRepair" + $dateTime + ".log"
 
-Write-Host "Elevation Succesful" -ForegroundColor Green
+#Write-Host "Elevation Succesful" -ForegroundColor Green
 Start-Sleep -Seconds 5
 
 #Initialzing Functions for Script
@@ -25,8 +30,11 @@ Start-Sleep -Seconds 5
 function Get-YNResponse([string]$Prompt) {
     $validInput = $false
     while (-not $validInput) {
+        while ([Console]::KeyAvailable) { #Clears input stream so only most recent press after this will be used as input
+            [Console]::ReadKey($true) 
+        }
         Write-Host $Prompt -ForegroundColor Green
-       $response = $Host.UI.RawUI.ReadKey().toString()[3]
+       $response = [System.Console]::ReadKey($true).KeyChar.toString()
        if ($response -eq "y" -or $response -eq "n") {
            $validInput = $true
            return $response
@@ -109,6 +117,7 @@ function Check-SectorSize {
 
 #function for installing SSMS from microsoft
 function Install-SSMS {
+    <# Commenting out folder selection for downloading ssms installer, will leave it here in case we want to use this in future
     Write-Host "Moving on to Install SQL Server Management Studio from Microsoft, in order to clean up any SQL dependencies that did not get installed correctly" -ForegroundColor Green
 	Add-Type -AssemblyName System.Windows.Forms
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -124,6 +133,8 @@ function Install-SSMS {
       Start-Sleep -Seconds 5
 	  return
 	}
+    #>
+    $installerPath = "C:\temp"
 	Push-Location -Path $installerPath
 	Write-Host "Attempting to download installer from Microsoft, this may take a few minutes:" -ForegroundColor Green
 	try{
@@ -166,7 +177,7 @@ function Install-SSMS {
         }
     }
 	Write-Host "If installation was successful, please try opening SQL Server Management Studio once, then try opening Ra2/HWQS Designer and see if this allows it to run!" -ForegroundColor Green
-	Write-Host "If this does not allow it to run, please let Tech Support know you ran this tool and it did not correct your issues, include the log file found in C:\temp\LutronGUIRepair.log." -ForegroundColor Green
+	Write-Host "If this does not allow it to run, please let Tech Support know you ran this tool and it did not correct your issues, include the log file found in C:\temp\LutronGUIRepair(current date/time).log." -ForegroundColor Green
     Start-Sleep -Seconds 5
 	Pop-Location
 }
@@ -177,8 +188,8 @@ Start-Sleep -Seconds 2
 #Restarting the instances on startup of script
 Restart-Instances
 #checking that all instances are running
-#Write-Host "Pausing for 30 Seconds so you can manually stop instances for testing." #will comment out 
-#Start-Sleep -Seconds 30 #adding a timer so that you can manually stop db instances for testing, will comment out eventually
+Write-Host "Pausing for 10 Seconds so you can manually stop instances for testing." #will comment out 
+Start-Sleep -Seconds 10 #adding a timer so that you can manually stop db instances for testing, will comment out eventually
 $mssqlr = Check-mssql
 $v11r = Check-v11
 #if they are running, try opening the GUI
@@ -208,4 +219,3 @@ Write-Host "Moving onto install SSMS..." -ForegroundColor Green
 Install-SSMS
 Start-Sleep -Seconds 60 
 Stop-Transcript
-
