@@ -18,7 +18,7 @@ $powershellProcesses | Where-Object {$_.Id -ne $currentProcessId} | Stop-Process
 
 #>
 $dateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-Start-Transcript -Path "C:\temp\LutronGUIRepair" + $dateTime + ".log"
+Start-Transcript -Path "C:\temp\LutronGUIRepair  $dateTime.log"
 Write-Host "Log file saved at: " + "C:\temp\LutronGUIRepair" + $dateTime + ".log"
 
 #Write-Host "Elevation Succesful" -ForegroundColor Green
