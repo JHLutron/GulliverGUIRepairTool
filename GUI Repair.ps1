@@ -19,7 +19,7 @@ $powershellProcesses | Where-Object {$_.Id -ne $currentProcessId} | Stop-Process
 #>
 $dateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 Start-Transcript -Path "C:\temp\LutronGUIRepair  $dateTime.log"
-Write-Host "Log file saved at: " + "C:\temp\LutronGUIRepair" + $dateTime + ".log"
+Write-Host "Log file saved at: C:\temp\LutronGUIRepair  $dateTime.log"
 
 #Write-Host "Elevation Succesful" -ForegroundColor Green
 Start-Sleep -Seconds 5
@@ -150,7 +150,7 @@ function Install-SSMS {
 	Write-Host "Installing SSMS..." -ForegroundColor Green
 	$arguments = "/install","/norestart"
 
-    Write-Verbose "Executing 'SSMS-Setup-ENU.exe $arguments'" -Verbose
+    Write-Host "Executing 'SSMS-Setup-ENU.exe $arguments'" -ForegroundColor Green
 
     try{
         $result = Start-Process .\SSMS-Setup-ENU.exe -ArgumentList $arguments -PassThru -Wait
@@ -173,7 +173,11 @@ function Install-SSMS {
         }
 
         default{
-            Write-Host "Installation was not successful"
+            Write-Host "Installation was not successful" -ForegroundColor Red
+            Write-Host "Please re-run script after trying to manually install SSMS from Microsoft's Website." -ForegroundColor Red
+            Pop-Location
+            Start-Sleep -Seconds 10
+            return
         }
     }
 	Write-Host "If installation was successful, please try opening SQL Server Management Studio once, then try opening Ra2/HWQS Designer and see if this allows it to run!" -ForegroundColor Green
