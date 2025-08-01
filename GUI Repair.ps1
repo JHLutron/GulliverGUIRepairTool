@@ -98,7 +98,7 @@ function Fix-SectorSize {
 
     REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Lutron\Lutron Designer\SQLParameterUpdate" /v "IsParameterAdded" /t REG_DWORD /d 1 /f 
 
-    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this script." -ForegroundColor Green
+    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this program." -ForegroundColor Green
     Start-Sleep -Seconds 10
     exit
 }
@@ -110,8 +110,10 @@ function Check-SectorSize {
     $sectorResponse = Get-YNResponse -Prompt "Are any of the above values above 4096(y/n)?"
     if($sectorResponse -eq "y"){
         Fix-SectorSize
+        return "Fix Ran"
     } elseif($sectorResponse -eq "n") {
         Write-Host "Sector Size is correct" -ForegroundColor Green
+        return "Sector Size OK"
     }
 }
 
@@ -142,7 +144,7 @@ function Install-SSMS {
     }
     catch{
         Write-Warning "Error downloading file: $($_.exception.message)"
-        Write-Host "Please re-run script after troubleshooting the above message." -ForegroundColor Red
+        Write-Host "Please re-run program after troubleshooting the above message or alternatively downloading and installing SQL Server Management Studio from Microsoft manually." -ForegroundColor Red
 		Pop-Location
         Start-Sleep -Seconds 5
 		return
@@ -157,10 +159,10 @@ function Install-SSMS {
     }
     catch{
         Write-Warning $_.exception.message
-		Write-Host "Please re-run script after troubleshooting the above message." -ForegroundColor Red
+		Write-Host "Please re-run program after troubleshooting the above message." -ForegroundColor Red
 		Pop-Location
         Start-Sleep -Seconds 5
-		return
+		exit
     }
 
     switch -Exact($result.ExitCode){
@@ -174,10 +176,10 @@ function Install-SSMS {
 
         default{
             Write-Host "Installation was not successful" -ForegroundColor Red
-            Write-Host "Please re-run script after trying to manually install SSMS from Microsoft's Website." -ForegroundColor Red
+            Write-Host "Please re-run script after trying to manually install SQL Server Management Studio from Microsoft's Website." -ForegroundColor Red
             Pop-Location
             Start-Sleep -Seconds 10
-            return
+            exit
         }
     }
 	Write-Host "If installation was successful, please try opening SQL Server Management Studio once, then try opening Ra2/HWQS Designer and see if this allows it to run!" -ForegroundColor Green
@@ -211,11 +213,36 @@ if($v11r -And $mssqlr)
 } else { #ONE OR BOTH INSTANCES FAILED TO START
     Write-Host "One or more of the SQL instances failed to start, moving onto next step..." -ForegroundColor Green
     #running the sector size fix
-    $sectorCheck = Get-YNResponse -Prompt "Have you ran through this script before and already verified Sector Size is good?(y/n)"
-    if($sectorCheck -eq "y"){
-        Write-Host "Moving onto next step..." -ForegroundColor Green
+    $sectorSizeFile = "C:\temp\SSF.txt"
+    if(Test-Path -Path $sectorSizeFile -PathType Leaf) {
+        #File exists, meaning they have been through this step before
+        if(Get-Content $sectorSizeFile -eq "Fix Ran") { #this step has ran before and ran the regedits fix
+
+           $rebootCheck = Get-YNResponse "Have you rebooted your machine since running the last step(y/n)"
+
+           if($rebootCheck -eq "y") { #if yes, verify that the change took effect
+                fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+                $sectorResponse2 = Get-YNResponse -Prompt "Are any of the above values still above 4096(y/n)?"
+                if($sectorResponse2 -eq "y"){ #rebooted and sector size changes did not take effect
+                    Write-Host "The sector size changes did not work as expected. Please reach out to Lutron Tech Support and let them know you ran through this program. Include the files in the C:\temp directory." -ForegroundColor Red
+                    Start-Sleep -Seconds 10
+                    exit
+                } elseif($sectorResponse2 -eq "n"){ #rebooted and sector size changes did take effect, but instances still did not start
+                    Write-Host "Sector Size changes worked, but the instances still failed to start, moving to next step..."
+                    Start-Sleep -Seconds 5
+                }
+           } elseif($rebootCheck -eq "n") { #meaning they ran the sector size fix but have not rebooted computer
+                Write-Host "You must restart your machine for the Sector Size changes to take effect." -ForegroundColor Red
+                Start-Sleep -Seconds 10
+                exit
+           }
+        } elseif(Get-Content $sectorSizeFile -eq "Sector Size OK"){
+            Write-Host "Sector Size is ok, but the instances still failed to start, moving to next step..."
+            Start-Sleep -Seconds 5
+        }
     } else {
-        Check-SectorSize
+        #File does not exist, they have not been through this step before
+        Set-Content -Path $sectorSizeFile -Value Check-SectorSize
     }
 }
 #if the above did not fix it, install SSMS and try again
