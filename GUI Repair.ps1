@@ -17,9 +17,8 @@ $powershellProcesses = Get-Process -Name powershell
 $powershellProcesses | Where-Object {$_.Id -ne $currentProcessId} | Stop-Process -Force
 
 #>
-$dateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-Start-Transcript -Path "C:\temp\LutronGUIRepair  $dateTime.log"
-Write-Host "Log file saved at: C:\temp\LutronGUIRepair  $dateTime.log"
+Start-Transcript -Path "C:\temp\LutronGUIRepair.log"
+Write-Host "Log file saved at: C:\temp\LutronGUIRepair.log"
 
 #Write-Host "Elevation Succesful" -ForegroundColor Green
 Start-Sleep -Seconds 5
@@ -92,21 +91,21 @@ function Check-mssql {
 #Reg edits for Sector Size fix
 function Fix-SectorSize {
     Write-Host "Correcting Registry..." -ForegroundColor Green
-    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14E.LOCALDB\MSSQLServer\Parameters" /v "SQLArg0" /t REG_SZ /d "-T1800" /f /reg:64 
+    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14E.LOCALDB\MSSQLServer\Parameters" /v "SQLArg0" /t REG_SZ /d "-T1800" /f /reg:64 | Out-Null
 
-    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL11E.LOCALDB\MSSQLServer\Parameters" /v "SQLArg0" /t REG_SZ /d "-T1800" /f /reg:64 
+    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL11E.LOCALDB\MSSQLServer\Parameters" /v "SQLArg0" /t REG_SZ /d "-T1800" /f /reg:64  | Out-Null
 
-    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Lutron\Lutron Designer\SQLParameterUpdate" /v "IsParameterAdded" /t REG_DWORD /d 1 /f 
+    REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Lutron\Lutron Designer\SQLParameterUpdate" /v "IsParameterAdded" /t REG_DWORD /d 1 /f  | Out-Null
 
-    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this program." -ForegroundColor Green
+    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this program." -ForegroundColor Green | Out-Null
     Start-Sleep -Seconds 10
-    exit
 }
 
 #function for checking sector size relying on user input
 function Check-SectorSize {
     Write-Host "Verifying Sector Size..." -ForegroundColor Green
-    fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+    $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+    Write-Host $fsutilOutput
     $sectorResponse = Get-YNResponse -Prompt "Are any of the above values above 4096(y/n)?"
     if($sectorResponse -eq "y"){
         Fix-SectorSize
@@ -216,7 +215,8 @@ if($v11r -And $mssqlr)
     $sectorSizeFile = "C:\temp\SSF.txt"
     if(Test-Path -Path $sectorSizeFile -PathType Leaf) {
         #File exists, meaning they have been through this step before
-        if(Get-Content $sectorSizeFile -eq "Fix Ran") { #this step has ran before and ran the regedits fix
+        $sectorResult = Get-Content $sectorSizeFile
+        if($sectorResult -eq "Fix Ran") { #this step has ran before and ran the regedits fix
 
            $rebootCheck = Get-YNResponse "Have you rebooted your machine since running the last step(y/n)"
 
@@ -236,13 +236,17 @@ if($v11r -And $mssqlr)
                 Start-Sleep -Seconds 10
                 exit
            }
-        } elseif(Get-Content $sectorSizeFile -eq "Sector Size OK"){
+        } elseif($sectorResult -eq "Sector Size OK"){
             Write-Host "Sector Size is ok, but the instances still failed to start, moving to next step..."
             Start-Sleep -Seconds 5
         }
     } else {
         #File does not exist, they have not been through this step before
-        Set-Content -Path $sectorSizeFile -Value Check-SectorSize
+        $sectorSizeResult = Check-SectorSize
+        Set-Content -Path $sectorSizeFile -Value $sectorSizeResult
+        if($sectorSizeResult -eq "Fix Ran"){ #if the fix was ran, let it save to the file and exit, otherwise keep going
+            exit
+        }
     }
 }
 #if the above did not fix it, install SSMS and try again
