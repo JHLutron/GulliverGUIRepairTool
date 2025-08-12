@@ -163,10 +163,10 @@ function Install-SSMS {
         Start-Sleep -Seconds 5
 		exit
     }
-    Write-Host $result.ExitCode 
-    Write-Host "Above is SSMS exit code" -ForegroundColor Red
+    $exitCodeDisplay = $result.ExitCode 
+    Write-Host "This is SSMS exit code $exitCodeDisplay" -ForegroundColor Red
     switch -Exact($result.ExitCode){
-        1603 { #this is fatal
+        1603 { #this is fatal so case should not occur since it should catch generally
             Write-Host "Reboot is required"
         }
 
