@@ -172,6 +172,10 @@ function Install-SSMS {
         0 {
             Write-Host "Installation successful"
         }
+        
+        3010 {
+            Write-Host "Reboot is required"
+        }
 
         default{
             Write-Host "Installation was not successful" -ForegroundColor Red
