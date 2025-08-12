@@ -163,9 +163,10 @@ function Install-SSMS {
         Start-Sleep -Seconds 5
 		exit
     }
-
+    Write-Host $result.ExitCode 
+    Write-Host "Above is SSMS exit code" -ForegroundColor Red
     switch -Exact($result.ExitCode){
-        1603 {
+        1603 { #this is fatal
             Write-Host "Reboot is required"
         }
 
@@ -197,7 +198,7 @@ Start-Sleep -Seconds 2
 #Restarting the instances on startup of script
 Restart-Instances
 #checking that all instances are running
-Write-Host "Pausing for 10 Seconds so you can manually stop instances for testing." #will comment out 
+Write-Host "Pausing for 10 Seconds..." #will comment out 
 Start-Sleep -Seconds 10 #adding a timer so that you can manually stop db instances for testing, will comment out eventually
 $mssqlr = Check-mssql
 $v11r = Check-v11
