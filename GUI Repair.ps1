@@ -178,6 +178,10 @@ function Install-SSMS {
             Write-Host "Reboot is required"
         }
 
+        1626 {
+            Write-Host "Looks like there is a pending restart, please restart your machine and try again" -ForegroundColor Red
+        }
+
         default{
             Write-Host "Installation was not successful" -ForegroundColor Red
             Write-Host "Please re-run script after trying to manually install SQL Server Management Studio from Microsoft's Website." -ForegroundColor Red
