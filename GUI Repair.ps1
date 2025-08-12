@@ -261,5 +261,5 @@ if($v11r -And $mssqlr)
 #if the above did not fix it, install SSMS and try again
 Write-Host "Moving onto install SSMS..." -ForegroundColor Green
 Install-SSMS
-Start-Sleep -Seconds 60 
+Start-Sleep -Seconds 900 
 Stop-Transcript
