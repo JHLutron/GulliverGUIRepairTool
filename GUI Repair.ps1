@@ -86,18 +86,22 @@ function Fix-SectorSize {
 function Check-SectorSize {
     Write-Host "Verifying Sector Size..." -ForegroundColor Green
     $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+    $fsutilOutput = $fsutilOutput + "6000"
     $SectorValues = $fsutilOutput -split "\D+"
-
+    $sectorGood = $true
     foreach($value in $SectorValues) {
         if($value -match "\d+") {
-            Write-Host "$value `n"
+            if($value -gt 4096)
+            {
+                $sectorGood = $false
+            }
          }
     }
-    $sectorResponse = Get-YNResponse -Prompt "Are any of the above values above 4096(y/n)?"
-    if($sectorResponse -eq "y"){
+
+    if($sectorGood -eq $false){
         Fix-SectorSize
         return "Fix Ran"
-    } elseif($sectorResponse -eq "n") {
+    } elseif($sectorGood -eq $true) {
         Write-Host "Sector Size is correct" -ForegroundColor Green
         return "Sector Size OK"
     }
