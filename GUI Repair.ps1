@@ -86,7 +86,6 @@ function Fix-SectorSize {
 function Check-SectorSize {
     Write-Host "Verifying Sector Size..." -ForegroundColor Green
     $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
-    $fsutilOutput = $fsutilOutput + "6000"
     $SectorValues = $fsutilOutput -split "\D+"
     $sectorGood = $true
     foreach($value in $SectorValues) {
@@ -165,7 +164,7 @@ function Install-SSMS {
         }
     }
 	Write-Host "If installation was successful, please try opening SQL Server Management Studio once, then try opening Ra2/HWQS Designer and see if this allows it to run!" -ForegroundColor Green
-	Write-Host "If this does not allow it to run, please let Tech Support know you ran this tool and it did not correct your issues, include the log file found in C:\temp\LutronGUIRepair(current date/time).log." -ForegroundColor Green
+	Write-Host "If this does not allow it to run, please let Tech Support know you ran this tool and it did not correct your issues, include the log file found in C:\temp\LutronGUIRepair.log." -ForegroundColor Green
     Start-Sleep -Seconds 5
 	Pop-Location
 }
@@ -204,13 +203,22 @@ if($v11r -And $mssqlr)
            $rebootCheck = Get-YNResponse "Have you rebooted your machine since running the last step(y/n)"
 
            if($rebootCheck -eq "y") { #if yes, verify that the change took effect
-                fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
-                $sectorResponse2 = Get-YNResponse -Prompt "Are any of the above values still above 4096(y/n)?"
-                if($sectorResponse2 -eq "y"){ #rebooted and sector size changes did not take effect
+                Write-Host "Verifying Sector Size..." -ForegroundColor Green
+                $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+                $SectorValues = $fsutilOutput -split "\D+"
+                $sectorGood = $true
+                foreach($value in $SectorValues) {
+                    if($value -match "\d+") {
+                        if($value -gt 4096) {
+                            $sectorGood = $false
+                        }
+                    }
+                }
+                if($sectorGood -eq $false){ #rebooted and sector size changes did not take effect
                     Write-Host "The sector size changes did not work as expected. Please reach out to Lutron Tech Support and let them know you ran through this program. Include the files in the C:\temp directory." -ForegroundColor Red
-                    Start-Sleep -Seconds 10
+                    Start-Sleep -Seconds 900 #sleep until they close out
                     exit
-                } elseif($sectorResponse2 -eq "n"){ #rebooted and sector size changes did take effect, but instances still did not start
+                } elseif($sectorResponse2 -eq $true){ #rebooted and sector size changes did take effect, but instances still did not start
                     Write-Host "Sector Size changes worked, but the instances still failed to start, moving to next step..."
                     Start-Sleep -Seconds 5
                 }
