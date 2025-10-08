@@ -1,22 +1,3 @@
-#Commenting out the elevation process for the exe version since this is not neeeded if ran as admin on the exe
-#Verifying administrator permissions are granted, if not, opens in elevated window
-<#
-try{
-    if(!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
-    Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($MyInvocation.MyCommand.Path)`"  `"$($MyInvocation.MyCommand.UnboundArguments)`""
-    }
-} catch {
-    Write-Host "Unable to elevate to local administrator. You must be able to elevate to Local Administrator rights in order to run this script." -ForegroundColor Red
-    Start-Sleep -Seconds 5
-    return
-}
-
-#if this works, need to close other powershell window and start the logging process
-$currentProcessId = $PID
-$powershellProcesses = Get-Process -Name powershell
-$powershellProcesses | Where-Object {$_.Id -ne $currentProcessId} | Stop-Process -Force
-
-#>
 Start-Transcript -Path "C:\temp\LutronGUIRepair.log"
 Write-Host "Log file saved at: C:\temp\LutronGUIRepair.log"
 
@@ -118,23 +99,6 @@ function Check-SectorSize {
 
 #function for installing SSMS from microsoft
 function Install-SSMS {
-    <# Commenting out folder selection for downloading ssms installer, will leave it here in case we want to use this in future
-    Write-Host "Moving on to Install SQL Server Management Studio from Microsoft, in order to clean up any SQL dependencies that did not get installed correctly" -ForegroundColor Green
-	Add-Type -AssemblyName System.Windows.Forms
-    $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
-    $folderBrowser.Description = "Select a folder to download the installer to when the window pops up:" #could send this to C:\temp but if they do not have space on C drive it will fail
-    Start-Sleep -Seconds 5
-    $result = $folderBrowser.ShowDialog()
-
-    if ($result -eq "OK") {
-      $installerPath = $folderBrowser.SelectedPath
-      Write-Host "Selected folder: $installerPath"
-    } else {
-      Write-Host "Folder selection cancelled. Re-run script to get back to this dialogue." -ForegroundColor Red
-      Start-Sleep -Seconds 5
-	  return
-	}
-    #>
     $installerPath = "C:\temp"
 	Push-Location -Path $installerPath
 	Write-Host "Attempting to download installer from Microsoft, this may take a few minutes:" -ForegroundColor Green
