@@ -86,7 +86,13 @@ function Fix-SectorSize {
 function Check-SectorSize {
     Write-Host "Verifying Sector Size..." -ForegroundColor Green
     $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
-    Write-Host $fsutilOutput
+    $SectorValues = $fsutilOutput -split "\D+"
+
+    foreach($value in $SectorValues) {
+        if($value -match "\d+") {
+            Write-Host "$value `n"
+         }
+    }
     $sectorResponse = Get-YNResponse -Prompt "Are any of the above values above 4096(y/n)?"
     if($sectorResponse -eq "y"){
         Fix-SectorSize
