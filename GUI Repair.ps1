@@ -85,8 +85,10 @@ function Fix-SectorSize {
     REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL11E.LOCALDB\MSSQLServer\Parameters" /v "SQLArg0" /t REG_SZ /d "-T1800" /f /reg:64  | Out-Null
 
     REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Lutron\Lutron Designer\SQLParameterUpdate" /v "IsParameterAdded" /t REG_DWORD /d 1 /f  | Out-Null
+    
+    REG ADD "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device" /v "ForcedPhysicalSectorSizeInBytes" /t REG_MULTI_SZ /d "* 4095" /f /reg:64 | Out-Null
 
-    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this program." -ForegroundColor Green | Out-Null
+    Write-Host "You must restart your machine for the changes to take place, please restart your computer and re-run this program." -ForegroundColor Green
     Start-Sleep -Seconds 10
 }
 
