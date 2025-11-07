@@ -92,6 +92,7 @@ function Check-SectorSize {
         if($value -match "\d+") {
             if($value -gt 4096)
             {
+                Write-Host "Value is $value"
                 $sectorGood = $false
             }
          }
@@ -175,7 +176,6 @@ Start-Sleep -Seconds 2
 #Restarting the instances on startup of script
 Restart-Instances
 #checking that all instances are running
-Write-Host "Pausing for 10 Seconds..." #will comment out 
 Start-Sleep -Seconds 10 #adding a timer so that you can manually stop db instances for testing, will comment out eventually
 $mssqlr = Check-mssql
 $v11r = Check-v11
@@ -242,6 +242,7 @@ if($v11r -And $mssqlr)
 }
 #if the above did not fix it, install SSMS and try again
 Write-Host "Moving onto install SSMS..." -ForegroundColor Green
+Start-Sleep -Seconds 10
 Install-SSMS
 Start-Sleep -Seconds 900 
 Stop-Transcript
