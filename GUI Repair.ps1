@@ -1,5 +1,13 @@
 Start-Transcript -Path "C:\temp\LutronGUIRepair.log"
 Write-Host "Log file saved at: C:\temp\LutronGUIRepair.log"
+#Admin level check, if fsutil is empty, they did not run as admin
+$adminTest = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
+if($adminTest.Length -eq 0)
+{
+    Write-Host "This application will close, please right click the .exe and run as admin to proceed." -ForegroundColor Red
+    Start-Sleep -Seconds 60
+    exit
+}
 
 #Write-Host "Elevation Succesful" -ForegroundColor Green
 Start-Sleep -Seconds 5
