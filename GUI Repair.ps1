@@ -35,7 +35,7 @@ function Get-YNResponse([string]$Prompt) {
 #Simple function to restart the localdb instances
 function Restart-Instances {
     sqllocaldb stop mssqllocaldb
-    sqllocaldb delete mssqllocaldb
+    sqllocaldb delete mssqllocaldb 
     sqllocaldb create mssqllocaldb
     sqllocaldb start mssqllocaldb
 
@@ -97,21 +97,17 @@ function Check-SectorSize {
     Write-Host "Verifying Sector Size..." -ForegroundColor Green
     $fsutilOutput = fsutil fsinfo sectorinfo C: | findstr PhysicalBytesPerSector
     $SectorValues = $fsutilOutput -split "\D+"
-    $sectorGood = $true
     foreach($value in $SectorValues) {
         if($value -match "\d+") {
-            if($value -gt 4096)
-            {
-                Write-Host "Value is $value"
-                $sectorGood = $false
-            }
+            Write-Host "Value is $value"
          }
     }
+    $sectorGood = Get-YNResponse -Prompt "Are any of the above values greater than 4096?(y/n)"
 
-    if($sectorGood -eq $false){
+    if($sectorGood -eq "y"){
         Fix-SectorSize
         return "Fix Ran"
-    } elseif($sectorGood -eq $true) {
+    } elseif($sectorGood -eq "n") {
         Write-Host "Sector Size is correct" -ForegroundColor Green
         return "Sector Size OK"
     }
